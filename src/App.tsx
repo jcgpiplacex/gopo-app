@@ -5,6 +5,8 @@ import ClientesPage from './modules/ventas/pages/ClientesPage'
 import ProyectosPage from './modules/proyectos/pages/ProyectosPage'
 import HitosPage from './modules/proyectos/pages/HitosPage'
 import GanttPage from './modules/proyectos/pages/GanttPage'
+import ProductosPage from './modules/compras/pages/ProductosPage'
+import CotizacionesPage from './modules/compras/pages/CotizacionesPage'
 
 // Páginas placeholder (las crearemos después)
 const Dashboard = () => <Layout title="Dashboard"><div className="p-6">Dashboard en construcción</div></Layout>
@@ -23,6 +25,8 @@ function App() {
         <Route path="/proyectos" element={<ProyectosPage />} />
         <Route path="/proyectos/hitos" element={<HitosPage />} />
         <Route path="/proyectos/gantt" element={<GanttPage />} />
+        <Route path="/compras/productos" element={<ProductosPage />} />
+        <Route path="/compras/cotizaciones" element={<CotizacionesPage />} />
 
         <Route path="*" element={<Layout title="Página no encontrada"><div className="p-6">404</div></Layout>} />
       </Routes>

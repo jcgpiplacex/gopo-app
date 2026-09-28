@@ -1,5 +1,4 @@
-import { useLocation, useNavigate } from 'react-router-dom'
-import React from 'react'
+import { useLocation } from 'react-router-dom'
 import clsx from 'clsx'
 
 interface NavItem {
@@ -9,12 +8,8 @@ interface NavItem {
   children?: NavItem[]
 }
 
-const modules: NavItem[] = [
-  {
-    label: 'Dashboard',
-    icon: 'ti-layout-dashboard',
-    path: '/'
-  },
+const NAV_ITEMS: NavItem[] = [
+  { label: 'Dashboard', icon: 'ti-layout-dashboard', path: '/' },
   {
     label: 'Proyectos',
     icon: 'ti-building-skyscraper',
@@ -25,127 +20,127 @@ const modules: NavItem[] = [
     ]
   },
   {
-    label: 'Contabilidad',
-    icon: 'ti-report-money',
-    children: [
-      { label: 'Resumen', icon: 'ti-chart-pie', path: '/contabilidad' },
-      { label: 'Ctas. por pagar', icon: 'ti-file-invoice', path: '/contabilidad/pagar' },
-      { label: 'Ctas. por cobrar', icon: 'ti-cash', path: '/contabilidad/cobrar' },
-      { label: 'Flujo de caja', icon: 'ti-chart-line', path: '/contabilidad/flujo' }
-    ]
-  },
-  {
     label: 'Compras',
     icon: 'ti-shopping-cart',
     children: [
-      { label: 'Órdenes de compra', icon: 'ti-clipboard-list', path: '/compras/oc' },
+      { label: 'Productos', icon: 'ti-package', path: '/compras/productos' },
       { label: 'Cotizaciones', icon: 'ti-file-text', path: '/compras/cotizaciones' },
-      { label: 'Proveedores', icon: 'ti-truck', path: '/compras/proveedores' },
-      { label: 'Facturas recibidas', icon: 'ti-receipt', path: '/compras/facturas' }
+      { label: 'Órdenes de Compra', icon: 'ti-receipt', path: '/compras/ordenes' },
+      { label: 'Facturas Recibidas', icon: 'ti-invoice', path: '/compras/facturas' }
     ]
   },
   {
     label: 'Ventas',
-    icon: 'ti-speakerphone',
+    icon: 'ti-cash',
     children: [
       { label: 'Clientes', icon: 'ti-users', path: '/ventas/clientes' },
-      { label: 'Presupuestos', icon: 'ti-file-dollar', path: '/ventas/presupuestos' },
-      { label: 'Contratos', icon: 'ti-writing', path: '/ventas/contratos' },
-      { label: 'Facturas emitidas', icon: 'ti-receipt-2', path: '/ventas/facturas' }
+      { label: 'Presupuestos', icon: 'ti-file-text', path: '/ventas/presupuestos' },
+      { label: 'Contratos', icon: 'ti-file', path: '/ventas/contratos' },
+      { label: 'Facturas Emitidas', icon: 'ti-invoice', path: '/ventas/facturas' }
+    ]
+  },
+  {
+    label: 'Contabilidad',
+    icon: 'ti-calculator',
+    children: [
+      { label: 'Flujo de Caja', icon: 'ti-chart-line', path: '/contabilidad/flujo' },
+      { label: 'Cuentas por Pagar', icon: 'ti-alert-circle', path: '/contabilidad/pagar' },
+      { label: 'Cuentas por Cobrar', icon: 'ti-alert-circle', path: '/contabilidad/cobrar' }
     ]
   }
 ]
 
 export default function Sidebar() {
-  const navigate = useNavigate()
   const location = useLocation()
-  const [expandedModule, setExpandedModule] = React.useState<string | null>('Proyectos')
 
   const isSubitemActive = (subitem: NavItem) => {
-    // Para proyectos, comparar también query params
     if (subitem.path?.includes('?')) {
       const [path, query] = subitem.path.split('?')
       const currentParams = new URLSearchParams(location.search)
       const subitemParams = new URLSearchParams(query)
-
       return (
         location.pathname === path &&
         currentParams.toString() === subitemParams.toString()
       )
     }
-
-    // Para rutas sin query params, solo activar si NO hay query params en la URL actual
     return location.pathname === subitem.path && location.search === ''
   }
 
+  const isParentActive = (parent: NavItem) => {
+    return parent.children?.some(child => isSubitemActive(child))
+  }
+
   return (
-    <div className="w-56 bg-slate-50 border-r border-slate-200 flex flex-col flex-shrink-0">
+    <div className="w-64 bg-slate-900 text-white h-screen flex flex-col overflow-y-auto">
       {/* Logo */}
-      <div className="px-4 py-3 border-b border-slate-200 flex items-center gap-3">
-        <div className="w-7 h-7 bg-blue-600 rounded-md flex items-center justify-center text-white text-sm font-bold">
-          G
-        </div>
-        <div>
-          <div className="text-sm font-semibold text-slate-900">Gopo App</div>
-          <div className="text-xs text-slate-500">Duotempus</div>
+      <div className="px-6 py-4 border-b border-slate-700">
+        <div className="flex items-center gap-2">
+          <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center font-bold">
+            G
+          </div>
+          <div>
+            <div className="font-bold text-sm">Gopo App</div>
+            <div className="text-xs text-slate-400">Duotempus</div>
+          </div>
         </div>
       </div>
 
-      {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto py-2">
-        {modules.map((module) => (
-          <div key={module.label} className="mb-1">
-            {/* Module header */}
-            <button
-              onClick={() => {
-                if (module.children) {
-                  setExpandedModule(expandedModule === module.label ? null : module.label)
-                } else if (module.path) {
-                  navigate(module.path)
-                }
-              }}
-              className={clsx(
-                'w-full flex items-center gap-2 px-4 py-2 text-sm cursor-pointer rounded-lg mx-1 transition-colors',
-                location.pathname === module.path
-                  ? 'bg-blue-100 text-blue-600 font-medium'
-                  : 'text-slate-600 hover:bg-slate-100'
-              )}
-            >
-              <i className={`ti ${module.icon} text-base flex-shrink-0`} />
-              <span className="flex-1 text-left">{module.label}</span>
-              {module.children && (
-                <i
+      {/* Nav Items */}
+      <nav className="flex-1 px-3 py-6 space-y-2">
+        {NAV_ITEMS.map((item, idx) => (
+          <div key={idx}>
+            {item.path ? (
+              <a
+                href={item.path}
+                className={clsx(
+                  'flex items-center gap-3 px-4 py-2 rounded-lg text-sm font-medium transition-colors',
+                  location.pathname === item.path
+                    ? 'bg-blue-600 text-white'
+                    : 'text-slate-300 hover:bg-slate-800'
+                )}
+              >
+                <i className={clsx('ti', item.icon, 'text-base')} />
+                {item.label}
+              </a>
+            ) : (
+              <div>
+                <div
                   className={clsx(
-                    'ti ti-chevron-down text-xs transition-transform flex-shrink-0',
-                    expandedModule === module.label ? 'rotate-180' : ''
+                    'flex items-center gap-3 px-4 py-2 text-sm font-medium rounded-lg transition-colors',
+                    isParentActive(item) ? 'bg-blue-600/10 text-white' : 'text-slate-300'
                   )}
-                />
-              )}
-            </button>
+                >
+                  <i className={clsx('ti', item.icon, 'text-base')} />
+                  {item.label}
+                </div>
 
-            {/* Sub-items */}
-            {module.children && expandedModule === module.label && (
-              <div className="mt-1">
-                {module.children.map((subitem) => (
-                  <button
-                    key={subitem.path}
-                    onClick={() => navigate(subitem.path!)}
-                    className={clsx(
-                      'w-full flex items-center gap-2 px-6 py-1.5 text-xs rounded-lg mx-1 transition-colors',
-                      isSubitemActive(subitem)
-                        ? 'bg-blue-100 text-blue-600 font-medium'
-                        : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700'
-                    )}
-                  >
-                    <i className={`ti ${subitem.icon} text-sm flex-shrink-0`} />
-                    <span className="flex-1 text-left">{subitem.label}</span>
-                  </button>
-                ))}
+                <div className="ml-4 mt-1 space-y-1 border-l border-slate-700 pl-3">
+                  {item.children?.map((child, childIdx) => (
+                    <a
+                      key={childIdx}
+                      href={child.path}
+                      className={clsx(
+                        'flex items-center gap-2 px-3 py-1.5 rounded text-xs font-medium transition-colors',
+                        isSubitemActive(child)
+                          ? 'bg-blue-600 text-white'
+                          : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
+                      )}
+                    >
+                      <i className={clsx('ti', child.icon, 'text-xs')} />
+                      {child.label}
+                    </a>
+                  ))}
+                </div>
               </div>
             )}
           </div>
         ))}
       </nav>
+
+      {/* Footer */}
+      <div className="px-6 py-4 border-t border-slate-700 text-xs text-slate-400">
+        <p>© 2024 Duotempus</p>
+      </div>
     </div>
   )
 }
