@@ -46,11 +46,9 @@ export interface Producto {
   nombre: string
   descripcion?: string
   codigo?: string
-  categoria?: string
   precio_unitario_clp: number
   precio_unitario_uf: number
   unidad_medida: string
-  stock: number
   activo: boolean
   notas?: string
   created_at: string
@@ -61,11 +59,9 @@ export interface ProductoFormData {
   nombre: string
   descripcion?: string
   codigo?: string
-  categoria?: string
   precio_unitario_clp: number
   precio_unitario_uf: number
   unidad_medida: string
-  stock: number
   activo: boolean
   notas?: string
 }

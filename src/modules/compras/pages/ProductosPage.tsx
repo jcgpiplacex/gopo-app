@@ -50,21 +50,17 @@ export default function ProductosPage() {
   return (
     <Layout title="Productos">
       <div className="p-6">
-        {/* KPIs */}
-        <div className="grid grid-cols-3 gap-4 mb-6">
-          <div className="bg-white border border-slate-200 rounded-lg p-4">
-            <div className="text-xs text-slate-600 font-medium mb-1">Total productos</div>
-            <div className="text-2xl font-bold text-slate-900">{productos?.length || 0}</div>
-          </div>
-          <div className="bg-white border border-slate-200 rounded-lg p-4">
-            <div className="text-xs text-slate-600 font-medium mb-1">Activos</div>
-            <div className="text-2xl font-bold text-green-600">{productos?.filter(p => p.activo).length || 0}</div>
-          </div>
-          <div className="bg-white border border-slate-200 rounded-lg p-4">
-            <div className="text-xs text-slate-600 font-medium mb-1">Stock total</div>
-            <div className="text-2xl font-bold text-blue-600">{productos?.reduce((sum, p) => sum + p.stock, 0) || 0}</div>
-          </div>
-        </div>
+{/* KPIs */}
+<div className="grid grid-cols-2 gap-4 mb-6">
+  <div className="bg-white border border-slate-200 rounded-lg p-4">
+    <div className="text-xs text-slate-600 font-medium mb-1">Total productos</div>
+    <div className="text-2xl font-bold text-slate-900">{productos?.length || 0}</div>
+  </div>
+  <div className="bg-white border border-slate-200 rounded-lg p-4">
+    <div className="text-xs text-slate-600 font-medium mb-1">Activos</div>
+    <div className="text-2xl font-bold text-green-600">{productos?.filter(p => p.activo).length || 0}</div>
+  </div>
+</div>
 
         {/* Toolbar */}
         <div className="flex items-center gap-3 mb-6">

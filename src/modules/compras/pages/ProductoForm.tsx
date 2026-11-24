@@ -7,7 +7,6 @@ const schema = z.object({
   nombre: z.string().min(1, 'El nombre es obligatorio'),
   descripcion: z.string().optional().or(z.literal('')),
   codigo: z.string().optional().or(z.literal('')),
-  categoria: z.string().optional().or(z.literal('')),
   precio_unitario_clp: z.coerce.number().nonnegative('El precio debe ser >= 0').default(0),
   precio_unitario_uf: z.coerce.number().nonnegative('El precio debe ser >= 0').default(0),
   unidad_medida: z.string().default('unidad'),
@@ -67,16 +66,6 @@ export default function ProductoForm({ producto, onSubmit, onClose, isLoading }:
               type="text"
               className="w-full px-3 py-2 border border-slate-300 rounded-md text-sm focus:ring-blue-500 focus:border-blue-500"
               placeholder="HOR-001"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Categoría</label>
-            <input
-              {...register('categoria')}
-              type="text"
-              className="w-full px-3 py-2 border border-slate-300 rounded-md text-sm focus:ring-blue-500 focus:border-blue-500"
-              placeholder="Materiales"
             />
           </div>
 

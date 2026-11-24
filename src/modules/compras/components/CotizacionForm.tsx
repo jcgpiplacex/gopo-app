@@ -8,16 +8,14 @@ import { useProyectos } from '../../proyectos/hooks/useProyectos'
 import { useProductos } from '../hooks/useProductos'
 
 const schema = z.object({
-  numero: z.string().min(1, 'El número es obligatorio'),
-  proveedor_id: z.string().min(1, 'El proveedor es obligatorio'),
-  proyecto_id: z.string().min(1, 'El proyecto es obligatorio'),
-  fecha: z.string().min(1, 'La fecha es obligatoria'),
-  moneda: z.enum(['CLP', 'UF']).default('CLP'),
-  uf_valor_referencia: z.coerce.number().optional(),
-  monto_clp: z.coerce.number().nonnegative().optional(),
-  monto_uf: z.coerce.number().nonnegative().optional(),
-  estado: z.enum(['borrador', 'enviada', 'aceptada', 'rechazada']).default('borrador'),
+  nombre: z.string().min(1, 'El nombre es obligatorio'),
   descripcion: z.string().optional().or(z.literal('')),
+  codigo: z.string().optional().or(z.literal('')),
+  categoria: z.string().optional().or(z.literal('')),
+  precio_unitario_clp: z.coerce.number().nonnegative('El precio debe ser >= 0').default(0),
+  precio_unitario_uf: z.coerce.number().nonnegative('El precio debe ser >= 0').default(0),
+  unidad_medida: z.string().default('unidad'),
+  activo: z.boolean().default(true),
   notas: z.string().optional().or(z.literal(''))
 })
 
