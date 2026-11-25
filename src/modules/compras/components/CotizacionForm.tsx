@@ -6,16 +6,20 @@ import type { CotizacionFormData } from '../types'
 import { useProveedores } from '../hooks/useProveedores'
 import { useProyectos } from '../../proyectos/hooks/useProyectos'
 import { useProductos } from '../hooks/useProductos'
+import { useCrearProducto } from '../hooks/useProductos'
+import { useEffect, useRef } from 'react'
 
 const schema = z.object({
-  nombre: z.string().min(1, 'El nombre es obligatorio'),
+  numero: z.string().min(1, 'El número es obligatorio'),
+  proveedor_id: z.string().min(1, 'El proveedor es obligatorio'),
+  proyecto_id: z.string().min(1, 'El proyecto es obligatorio'),
+  fecha: z.string().min(1, 'La fecha es obligatoria'),
+  moneda: z.enum(['CLP', 'UF']).default('CLP'),
+  uf_valor_referencia: z.coerce.number().optional(),
+  monto_clp: z.coerce.number().nonnegative().optional(),
+  monto_uf: z.coerce.number().nonnegative().optional(),
+  estado: z.enum(['en_revision', 'aceptada', 'rechazada']).default('en_revision'),
   descripcion: z.string().optional().or(z.literal('')),
-  codigo: z.string().optional().or(z.literal('')),
-  categoria: z.string().optional().or(z.literal('')),
-  precio_unitario_clp: z.coerce.number().nonnegative('El precio debe ser >= 0').default(0),
-  precio_unitario_uf: z.coerce.number().nonnegative('El precio debe ser >= 0').default(0),
-  unidad_medida: z.string().default('unidad'),
-  activo: z.boolean().default(true),
   notas: z.string().optional().or(z.literal(''))
 })
 
@@ -29,17 +33,57 @@ interface CotizacionFormProps {
 export default function CotizacionForm({ cotizacion, onSubmit, onClose, isLoading }: CotizacionFormProps) {
   const { data: proveedores } = useProveedores()
   const { data: proyectos } = useProyectos()
-  const { data: productos } = useProductos()
+  const { data: productos, refetch: refetchProductos } = useProductos()
+  const crearProductoMutation = useCrearProducto()
+  
   const [items, setItems] = useState<any[]>(cotizacion?.items || [])
   const [productoSeleccionado, setProductoSeleccionado] = useState('')
   const [cantidad, setCantidad] = useState(1)
-  const [ufActual] = useState(38500)
+  const [ufActual, setUfActual] = useState(38500)
+  
+  const [showNuevoProducto, setShowNuevoProducto] = useState(false)
+  const [nuevoProductoData, setNuevoProductoData] = useState({
+    nombre: '',
+    codigo: '',
+    precio_unitario_clp: 0,
+    precio_unitario_uf: 0,
+    unidad_medida: 'unidad',
+    activo: true
+  })
+
+  const [lastEditedPrecioField, setLastEditedPrecioField] = useState<'clp' | 'uf' | null>(null)
+const timeoutRefProducto = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+// Conversión automática de precios en nuevo producto
+useEffect(() => {
+  if (timeoutRefProducto.current) clearTimeout(timeoutRefProducto.current)
+
+  timeoutRefProducto.current = setTimeout(() => {
+    if (lastEditedPrecioField === 'clp' && nuevoProductoData.precio_unitario_clp > 0) {
+      const precioEnUF = nuevoProductoData.precio_unitario_clp / ufActual
+      setNuevoProductoData(prev => ({
+        ...prev,
+        precio_unitario_uf: Math.round(precioEnUF * 100) / 100
+      }))
+    } else if (lastEditedPrecioField === 'uf' && nuevoProductoData.precio_unitario_uf > 0) {
+      const precioEnCLP = nuevoProductoData.precio_unitario_uf * ufActual
+      setNuevoProductoData(prev => ({
+        ...prev,
+        precio_unitario_clp: Math.round(precioEnCLP)
+      }))
+    }
+  }, 500)
+
+  return () => {
+    if (timeoutRefProducto.current) clearTimeout(timeoutRefProducto.current)
+  }
+}, [nuevoProductoData.precio_unitario_clp, nuevoProductoData.precio_unitario_uf, lastEditedPrecioField, ufActual])
 
   const { register, handleSubmit, watch, formState: { errors }, setValue } = useForm({
     resolver: zodResolver(schema),
     defaultValues: cotizacion || {
       moneda: 'CLP',
-      estado: 'borrador',
+      estado: 'en_revision',
       fecha: new Date().toISOString().split('T')[0],
       uf_valor_referencia: ufActual
     }
@@ -92,6 +136,26 @@ export default function CotizacionForm({ cotizacion, onSubmit, onClose, isLoadin
     } else {
       setValue('monto_uf', total)
       setValue('monto_clp', total * ufActual)
+    }
+  }
+
+  const handleCrearProducto = async () => {
+    try {
+      await crearProductoMutation.mutateAsync(nuevoProductoData)
+      setShowNuevoProducto(false)
+      setNuevoProductoData({
+        nombre: '',
+        codigo: '',
+        precio_unitario_clp: 0,
+        precio_unitario_uf: 0,
+        unidad_medida: 'unidad',
+        activo: true
+      })
+      // Refrescar lista de productos
+      refetchProductos()
+    } catch (err) {
+      console.error('Error:', err)
+      alert('Error al crear producto')
     }
   }
 
@@ -178,8 +242,7 @@ export default function CotizacionForm({ cotizacion, onSubmit, onClose, isLoadin
               {...register('estado')}
               className="w-full px-3 py-2 border border-slate-300 rounded-md text-sm focus:ring-blue-500 focus:border-blue-500"
             >
-              <option value="borrador">Borrador</option>
-              <option value="enviada">Enviada</option>
+              <option value="en_revision">En Revisión</option>
               <option value="aceptada">Aceptada</option>
               <option value="rechazada">Rechazada</option>
             </select>
@@ -190,6 +253,84 @@ export default function CotizacionForm({ cotizacion, onSubmit, onClose, isLoadin
       {/* Items */}
       <div>
         <h3 className="text-sm font-semibold text-slate-900 mb-4">Items</h3>
+        
+        {/* Modal para nuevo producto */}
+        {showNuevoProducto && (
+          <div className="bg-slate-50 border border-slate-300 rounded-lg p-4 mb-4">
+            <h4 className="text-sm font-semibold text-slate-900 mb-3">Crear nuevo producto</h4>
+            <div className="grid grid-cols-2 gap-3 mb-3">
+              <input
+                type="text"
+                placeholder="Nombre *"
+                value={nuevoProductoData.nombre}
+                onChange={(e) => setNuevoProductoData({ ...nuevoProductoData, nombre: e.target.value })}
+                className="col-span-2 px-3 py-2 border border-slate-300 rounded-md text-sm"
+              />
+              <input
+                type="text"
+                placeholder="Código"
+                value={nuevoProductoData.codigo}
+                onChange={(e) => setNuevoProductoData({ ...nuevoProductoData, codigo: e.target.value })}
+                className="px-3 py-2 border border-slate-300 rounded-md text-sm"
+              />
+              <select
+                value={nuevoProductoData.unidad_medida}
+                onChange={(e) => setNuevoProductoData({ ...nuevoProductoData, unidad_medida: e.target.value })}
+                className="px-3 py-2 border border-slate-300 rounded-md text-sm"
+              >
+                <option value="unidad">Unidad</option>
+                <option value="metro">Metro</option>
+                <option value="kilo">Kilo</option>
+                <option value="litro">Litro</option>
+                <option value="m2">m²</option>
+                <option value="m3">m³</option>
+                <option value="gl">Global</option>
+              </select>
+<div>
+  <label className="text-xs text-slate-600">Precio CLP</label>
+  <input
+    type="number"
+    step="any"
+    placeholder="0"
+    value={nuevoProductoData.precio_unitario_clp || ''}
+    onFocus={() => setLastEditedPrecioField('clp')}
+    onChange={(e) => setNuevoProductoData({ ...nuevoProductoData, precio_unitario_clp: Number(e.target.value) || 0 })}
+    className="w-full px-3 py-2 border border-slate-300 rounded-md text-sm"
+  />
+</div>
+<div>
+  <label className="text-xs text-slate-600">Precio UF</label>
+  <input
+    type="number"
+    step="0.01"
+    placeholder="0"
+    value={nuevoProductoData.precio_unitario_uf || ''}
+    onFocus={() => setLastEditedPrecioField('uf')}
+    onChange={(e) => setNuevoProductoData({ ...nuevoProductoData, precio_unitario_uf: Number(e.target.value) || 0 })}
+    className="w-full px-3 py-2 border border-slate-300 rounded-md text-sm"
+  />
+</div>
+            </div>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={handleCrearProducto}
+                disabled={!nuevoProductoData.nombre || crearProductoMutation.isPending}
+                className="flex-1 px-3 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 text-xs font-medium"
+              >
+                {crearProductoMutation.isPending ? 'Creando...' : 'Crear producto'}
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowNuevoProducto(false)}
+                className="flex-1 px-3 py-2 bg-slate-300 text-slate-900 rounded-md hover:bg-slate-400 text-xs font-medium"
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        )}
+
         <div className="grid grid-cols-3 gap-4 mb-4">
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">Producto</label>
@@ -217,13 +358,20 @@ export default function CotizacionForm({ cotizacion, onSubmit, onClose, isLoadin
             />
           </div>
 
-          <div className="flex items-end">
+          <div className="flex flex-col gap-2">
             <button
               type="button"
               onClick={agregarProducto}
-              className="w-full px-3 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 text-sm font-medium"
+              className="flex-1 px-3 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 text-sm font-medium"
             >
               Agregar
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowNuevoProducto(true)}
+              className="flex-1 px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-xs font-medium"
+            >
+              + Nuevo
             </button>
           </div>
         </div>

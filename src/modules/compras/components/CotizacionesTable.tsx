@@ -45,8 +45,7 @@ export default function CotizacionesTable({
 
   const getEstadoColor = (estado: string) => {
     const colores: { [key: string]: string } = {
-      'borrador': 'bg-slate-100 text-slate-700',
-      'enviada': 'bg-blue-100 text-blue-700',
+      'en_revision': 'bg-yellow-100 text-yellow-700',
       'aceptada': 'bg-green-100 text-green-700',
       'rechazada': 'bg-red-100 text-red-700'
     }
@@ -55,12 +54,20 @@ export default function CotizacionesTable({
 
   const getEstadoIcon = (estado: string) => {
     const iconos: { [key: string]: string } = {
-      'borrador': 'ti-file-text',
-      'enviada': 'ti-send',
+      'en_revision': 'ti-clock',
       'aceptada': 'ti-circle-check-filled',
       'rechazada': 'ti-circle-x'
     }
     return iconos[estado] || 'ti-file'
+  }
+
+  const getEstadoLabel = (estado: string) => {
+    const labels: { [key: string]: string } = {
+      'en_revision': 'En Revisión',
+      'aceptada': 'Aceptada',
+      'rechazada': 'Rechazada'
+    }
+    return labels[estado] || estado
   }
 
   return (
@@ -104,7 +111,7 @@ export default function CotizacionesTable({
                   )}
                 >
                   <i className={clsx('ti text-xs', getEstadoIcon(cotizacion.estado))} />
-                  {cotizacion.estado.charAt(0).toUpperCase() + cotizacion.estado.slice(1)}
+                  {getEstadoLabel(cotizacion.estado)}
                 </span>
               </td>
               <td className="px-6 py-3">

@@ -1,5 +1,5 @@
 export type TipoCuenta = 'corriente' | 'ahorro' | 'vista' | 'otro'
-export type EstadoCotizacion = 'borrador' | 'enviada' | 'aceptada' | 'rechazada'
+export type EstadoCotizacion = 'borrador' | 'aceptada' | 'rechazada'
 export type EstadoOrdenCompra = 'borrador' | 'enviada' | 'recibida' | 'cancelada'
 export type EstadoFacturaRecibida = 'pendiente' | 'pagada' | 'vencida'
 export type Moneda = 'CLP' | 'UF'
